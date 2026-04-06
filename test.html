@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Portfolio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background-color: #b5b5b5;
+            color: #333;
+            line-height: 1.6;
+            text-transform: normal;
+            position: relative;
+            min-height: 100vh;
+            --cursor-x: 50vw;
+            --cursor-y: 50vh;
+        }
+
+        #cursor-glow {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(260px circle at var(--cursor-x) var(--cursor-y),
+                    rgba(255, 255, 255, 0.45) 0%,
+                    rgba(255, 255, 255, 0) 75%);
+        }
+
+        header,
+        .page,
+        .project-nav {
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+            padding: 1rem 1.5rem 4rem;
+            border-bottom: none;
+            pointer-events: none;
+        }
+
+        nav,
+        nav * {
+            pointer-events: auto;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            gap: 2rem;
+            width: 100%;
+        }
+
+        nav .brand {
+            font-weight: 1000;
+            font-size: 1.2rem;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        nav a.brand {
+            text-decoration: none;
+        }
+
+        nav a {
+            text-decoration: underline;
+            color: #333;
+            font-weight: 1000;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #666;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .with-header-offset {
+            padding-top: 5rem;
+        }
+
+        .gallery {
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+            padding: 7rem 1rem 7rem;
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .work-item {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: var(--info-gap, 4rem);
+            cursor: pointer;
+            transition: none;
+            width: 100%;
+            max-width: 1700px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .work-item.info-left {
+            flex-direction: row-reverse;
+        }
+
+        .work-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            width: 98vw;
+            transform: translateX(-50%);
+            bottom: -2rem;
+            height: 1px;
+            background-color: #cdcdcd;
+        }
+
+        .work-item:hover {
+            transform: none;
+        }
+
+        .work-image {
+            width: 48%;
+            height: 360px;
+            flex-shrink: 0;
+            overflow: visible;
+            background-color: transparent;
+            transition: transform 0.25s ease;
+        }
+
+        .work-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center center;
+            display: block;
+            transition: transform 0.25s ease;
+        }
+
+        .work-item:hover .work-image img {
+            transform: none;
+        }
+
+        .detail-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: left center;
+            display: block;
+        }
+
+        .detail-image iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: none;
+        }
+
+        .detail-image video {
+            width: 100%;
+            height: 100%;
+            display: none;
+            object-fit: contain;
+            background-color: transparent;
+        }
+
+        .work-info {
+            width: 28%;
+            min-width: 260px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 1.5rem;
+            transition: transform 0.25s ease;
+        }
+
+        .work-item:hover .work-image,
+        .work-item:hover .work-info {
+            transform: translateY(-4px);
+        }
+
+        .work-info h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+            text-decoration: underline;
+        }
+
+        .work-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .detail-page {
+            max-width: 1200px;
+            margin: 2rem 1rem;
+            padding: 2rem;
+            background-color: transparent;
+            border: none;
+        }
+
+        .detail-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+        }
+
+        .detail-image {
+            width: min(100%, var(--media-max-width, 760px));
+            height: 360px;
+            background-color: transparent;
+            margin: 0;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .detail-image.is-video {
+            height: auto;
+            aspect-ratio: var(--media-ratio, 16 / 9);
+        }
+
+        .detail-image.is-video iframe,
+        .detail-image.is-video video {
+            width: 100%;
+            height: 100%;
+        }
+
+        .back-btn {
+            background: none;
+            color: #333;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: 'Times New Roman', Times, serif;
+            text-decoration: underline;
+            margin-bottom: 1rem;
+            transition: color 0.3s;
+        }
+
+        .back-btn:hover {
+            color: #666;
+        }
+
+        .detail-text {
+            max-width: 440px;
+        }
+
+        .detail-text h2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .graphic-work-gallery {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .graphic-work-gallery img {
+            display: block;
+            width: 88%;
+            max-width: 720px;
+            height: auto;
+            margin: 0 auto;
+        }
+
+        .with-header-offset .content {
+            padding-top: 1.15rem;
+        }
+
+        .with-header-offset .detail-page {
+            margin-top: 0.9rem;
+            padding-top: 1.15rem;
+        }
+
+        #work-description {
+            white-space: pre-line;
+        }
+
+        .project-nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            gap: 2rem;
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(to top, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+        }
+
+        .project-nav a {
+            text-decoration: underline;
+            color: #333;
+            font-weight: 1000;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.3s;
+            pointer-events: auto;
+        }
+
+        .project-nav a:hover {
+            color: #666;
+        }
+
+        @media (max-width: 900px) {
+            header {
+                padding: 0.75rem 0.75rem 2.25rem;
+                transition: transform 0.3s ease;
+                will-change: transform;
+            }
+
+            header.mobile-header-hidden {
+                transform: translateY(-115%);
+            }
+
+            nav {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.75rem 1rem;
+            }
+
+            nav .brand {
+                width: 100%;
+                text-align: center;
+                order: -1;
+                font-size: 1.1rem;
+            }
+
+            nav a {
+                font-size: 1rem;
+            }
+
+            .with-header-offset {
+                padding-top: 3rem;
+            }
+
+            .gallery {
+                height: auto;
+                min-height: 100vh;
+                gap: 2rem;
+                padding: 6.25rem 0.75rem 6rem;
+            }
+
+            .work-item,
+            .work-item.info-left {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+
+            .work-item:not(:last-child)::after {
+                left: 0;
+                width: 100%;
+                transform: none;
+            }
+
+            .work-image {
+                width: 100%;
+                max-width: 560px;
+                height: 250px;
+                margin: 0 auto;
+            }
+
+            .work-info {
+                width: 100%;
+                min-width: 0;
+                padding: 0.5rem 0.25rem 0;
+            }
+
+            #work-description {
+                white-space: pre-line;
+            }
+
+            .content {
+                padding: 1.25rem 1rem;
+            }
+
+            .graphic-work-gallery {
+                gap: 0.75rem;
+            }
+
+            .with-header-offset .content {
+                padding-top: 0.8rem;
+            }
+
+            .with-header-offset .detail-page {
+                margin-top: 0.55rem;
+                padding-top: 0.8rem;
+            }
+
+            .detail-page {
+                margin: 1rem 0.75rem 5.5rem;
+                padding: 1rem 0;
+            }
+
+            .detail-image {
+                width: 100%;
+                height: 260px;
+                margin-bottom: 1rem;
+            }
+
+            .detail-content {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .detail-text {
+                max-width: none;
+            }
+
+            .detail-image.is-video {
+                height: auto;
+            }
+
+            .project-nav {
+                display: none;
+            }
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            #cursor-glow {
+                background: radial-gradient(220px circle at 50% 20vh,
+                        rgba(255, 255, 255, 0.35) 0%,
+                        rgba(255, 255, 255, 0) 75%);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cursor-glow" aria-hidden="true"></div>
+    <header>
+        <nav>
+            <a href="#" onclick="showPage('links')">Links</a>
+            <a href="#" onclick="showPage('about')">About</a>
+            <a href="#" onclick="showPage('home')" class="brand">Sep van der Spiegel</a>
+            <a href="#" onclick="showPage('cv')">CV</a>
+            <a href="#" onclick="showPage('graphic-work')">Graphic design</a>
+        </nav>
+    </header>
+
+    <!-- HOME PAGE -->
+    <div id="home" class="page active">
+        <div class="gallery">
+            <div class="work-item" id="project-1" onclick="showWork(1)">
+                <div class="work-image">
+                    <img src="images/turn me on MAIN.png" alt="Turn me on artwork">
+                </div>
+                <div class="work-info">
+                    <h3>Turn me on</h3>
+                    <p>A little robot that tries to stay alive</p>
+                </div>
+            </div>
+            <div class="work-item" id="project-6" onclick="showWork(6)">
+                <div class="work-image">
+                    <img src="images/keepingItTogether.png" alt="Keeping it together artwork">
+                </div>
+                <div class="work-info">
+                    <h3>Keeping it together</h3>
+                    <p>Plastic bags drifting in the wind</p>
+                </div>
+            </div>
+            <div class="work-item" id="project-2" onclick="showWork(2)">
+                <div class="work-image">
+                    <img src="images/stayTogether.png" alt="Stay together artwork">
+                </div>
+                <div class="work-info">
+                    <h3>Stay together</h3>
+                    <p>Cooperative two-player game in the Microsoft operating system</p>
+                </div>
+            </div>
+            <div class="work-item" id="project-7" onclick="showWork(7)">
+                <div class="work-image">
+                    <img src="images/ppt.png" alt="ppt.exe artwork">
+                </div>
+                <div class="work-info">
+                    <h3>ppt.exe</h3>
+                    <p>Ppt.exe is a horror game made entirely within Powerpoint using no added code.</p>
+                </div>
+            </div>
+            <div class="work-item" id="project-5" onclick="showWork(5)">
+                <div class="work-image">
+                    <img src="images/Nodal.png" alt="Soft Geometry artwork">
+                </div>
+                <div class="work-info">
+                    <h3>|\| () |) /-\ |_</h3>
+                    <p>Ecosystem existing entirely in the UI of TouchDesigner</p>
+                </div>
+            </div>
+            <div class="work-item" id="project-3" onclick="showWork(3)">
+                <div class="work-image">
+                    <img src="images/friendlyman.png" alt="Friendlyman artwork">
+                </div>
+                <div class="work-info">
+                    <h3>Friendlyman</h3>
+                    <p>One man, in a world, where he is friendly..</p>
+                </div>
+            </div>
+            <div class="work-item" id="project-4" onclick="showWork(4)">
+                <div class="work-image">
+                    <img src="images/R4D4R.png" alt="R4D4R artwork">
+                </div>
+                <div class="work-info">
+                    <h3>R4D4R</h3>
+                    <p>Sound-reactive light-installation with ready-mades</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WORK DETAIL PAGE -->
+    <div id="work-detail" class="page with-header-offset">
+        <div class="detail-page">
+            <button class="back-btn" onclick="showPage('home')">← Back</button>
+            <div class="detail-content">
+                <div class="detail-image">
+                    <img id="detail-work-image" src="" alt="Selected artwork">
+                    <iframe id="detail-work-video" title="Selected project video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                    <video id="detail-work-video-file" controls playsinline preload="metadata"></video>
+                </div>
+                <div class="detail-text">
+                    <h2 id="work-title"></h2>
+                    <p id="work-description"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABOUT PAGE -->
+    <div id="about" class="page with-header-offset">
+        <div class="content">
+            <button class="back-btn" onclick="showPage('home')">← Back</button>
+            <h2>About</h2>
+            <p>My name is Sep van der Spiegel. I am currently working in Arnhem, Netherlands. I like to work in different ways, depending on what suits a project best. Sometimes that’s an interactive game or a physical installation, and sometimes it’s graphic work. I try to work from a strong concept but also find it important to keep my projects light-hearted. I hope to encourage interaction between the viewer and my work.
+            </p>
+        </div>
+    </div>
+
+    <!-- LINKS PAGE -->
+    <div id="links" class="page with-header-offset">
+        <div class="content">
+            <button class="back-btn" onclick="showPage('home')">← Back</button>
+            <h2>Links</h2>
+            <ul>
+                <li><a href="https://www.instagram.com/sepvdspiegel/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+                <li><a href="https://m.youtube.com/@sepvanderspiegel" target="_blank" rel="noopener noreferrer">YouTube</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- CV PAGE -->
+    <div id="cv" class="page with-header-offset">
+        <div class="content">
+            <button class="back-btn" onclick="showPage('home')">← Back</button>
+            <h2>CV</h2>
+            <p>
+                ArtEZ Hogeschool voor de kunsten, bachelor Design Art Technology.<br><br>
+                <em>Skills: Arduino, Photoshop, After Effects, Illustrator, Blender</em>
+            </p>
+        </div>
+    </div>
+
+    <!-- GRAPHIC WORKS PAGE -->
+    <div id="graphic-work" class="page with-header-offset">
+        <div class="content">
+            <button class="back-btn" onclick="showPage('home')">← Back</button>
+            <h2>Graphic design</h2>
+            <div class="graphic-work-gallery">
+                <img src="images/1.jpeg" alt="Graphic work image 1">
+                <img src="images/2.png" alt="Graphic work image 2">
+                <img src="images/3.png" alt="Graphic work image 3">
+                <img src="images/4.png" alt="Graphic work image 4">
+                <img src="images/5.png" alt="Graphic work image 5">
+            </div>
+        </div>
+    </div>
+
+    <div class="project-nav">
+        <a href="#" onclick="scrollToProject(1)">Turn me on</a>
+        <a href="#" onclick="scrollToProject(6)">Keeping it together</a>
+        <a href="#" onclick="scrollToProject(2)">Stay together</a>
+        <a href="#" onclick="scrollToProject(7)">ppt.exe</a>
+        <a href="#" onclick="scrollToProject(5)">|\| () |) /-\ |_</a>
+        <a href="#" onclick="scrollToProject(3)">Friendlyman</a>
+        <a href="#" onclick="scrollToProject(4)">R4D4R</a>
+    </div>
+
+    <script>
+        const works = {
+            1: {
+                title: "Turn me on",
+                description: "What happens when a machine refuses to be turned off? This little robot has a will of its own. When you turn it on it prevents you from turning it off by moving away. Inspired by the useless machine.\n\nMaterials: MDF, cardboard, Arduino",
+                image: "images/turn me on MAIN.png",
+                videoFile: "videos/turnMeOn.mov",
+                videoRatio: "1080 / 1920",
+                mediaMaxWidth: "270px"
+            },
+            2: {
+                title: "Stay together",
+                description: "Two little cuties living in the Microsoft interface. The software elements are obstacles or can be used to their advantage.\nStay together is a puzzle game for two players. The goal for each level is to build a bridge and come together again.\n\nMade with P5.js.",
+                image: "images/stayTogether.png",
+                videoFile: "videos/stay together.mp4"
+            },
+            3: {
+                title: "Friendlyman",
+                description: "Two superheroes and one seemingly normal guy are waiting at a bus stop. The superheroes are confident about their powers. But maybe having powers can’t help with everything.. \n\nMade with Photoshop and After Effects.",
+                image: "images/friendlyman.png",
+                video: "https://www.youtube.com/embed/3QuldsmOWbU",
+                videoRatio: "16 / 9"
+            },
+            4: {
+                title: "R4D4R",
+                description: "Three ventilators moving back and forth, casting light on the walls. Their speed controlled by a soundscape of low frequencies. A big radar on the floor.\n  This installation was made to simulate life in a bunker. The lights and sound warp the room, making the viewer lose sense of time and space.\n\nInstallation for Emerging Exits exhibit in Diogenes Bunker, Arnhem.\nCollaborative project with Jurre Bakker and Alessandra Schipa.",
+                image: "images/R4D4R.png",
+                videoFile: "videos/R4D4R.mp4",
+                videoRatio: "1080 / 1920"
+            },
+            5: {
+                title: "|\\| () |) /-\\ |_",
+                description: "What happens when you use the interface of TouchDesigner as output? |\\| () |) /-\\ |_ (NODAL) is an ecosystem of moving nodes, twisting their intended use of tools for programming.\n\nMade with TouchDesigner",
+                image: "images/Nodal.png",
+                video: "https://www.youtube.com/embed/r4ZMMkXFfZ4",
+                videoRatio: "16 / 9"
+            },
+            6: {
+                title: "Keeping it together",
+                description: "White plastic bags, carelessly used to carry take-out food, often still given away for free. A lot of bags end up on the ground where the wind might take them. In an alley surrounded by walls the wind can turn into a small tornado, making it seem as if the bags are performing ballet.",
+                image: "images/keepingItTogether.png",
+                videoFile: "videos/keepingItTogether.mp4",
+                videoRatio: "1080 / 1920"
+            },
+            7: {
+                title: "ppt.exe",
+                description: "Ppt.exe is a horror game made entirely within Powerpoint using no added code.",
+                image: "images/ppt.png",
+                videoFile: "videos/pptx.mp4",
+                videoRatio: "1080 / 1920"
+            }
+        };
+
+        function stopAllMediaPlayback() {
+            document.querySelectorAll('video, audio').forEach(media => {
+                media.pause();
+                media.currentTime = 0;
+            });
+
+            document.querySelectorAll('iframe').forEach(frame => {
+                if (frame.src && frame.src !== 'about:blank') {
+                    frame.dataset.previousSrc = frame.src;
+                    frame.src = 'about:blank';
+                }
+            });
+        }
+
+        function showPage(pageId) {
+            if (pageId !== 'work-detail') {
+                stopAllMediaPlayback();
+            }
+
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function parseRatio(ratioValue) {
+            if (!ratioValue || typeof ratioValue !== 'string') {
+                return null;
+            }
+
+            const parts = ratioValue.split('/').map(part => Number(part.trim()));
+            const [widthPart, heightPart] = parts;
+
+            if (!widthPart || !heightPart || Number.isNaN(widthPart) || Number.isNaN(heightPart)) {
+                return null;
+            }
+
+            return { width: widthPart, height: heightPart };
+        }
+
+        function getDefaultVideoMaxWidth(isPortrait) {
+            return isPortrait ? '320px' : '860px';
+        }
+
+        function showWork(workId) {
+            const selectedWork = works[workId];
+            const detailMediaContainer = document.querySelector('.detail-image');
+            const detailImage = document.getElementById('detail-work-image');
+            const detailVideo = document.getElementById('detail-work-video');
+            const detailVideoFile = document.getElementById('detail-work-video-file');
+            const configuredRatio = parseRatio(selectedWork.videoRatio);
+            const isConfiguredPortrait = configuredRatio ? configuredRatio.height > configuredRatio.width : false;
+
+            document.getElementById('work-title').textContent = works[workId].title;
+            document.getElementById('work-description').textContent = works[workId].description;
+
+            detailMediaContainer.classList.remove('is-video');
+            detailMediaContainer.style.setProperty('--media-ratio', selectedWork.videoRatio || '16 / 9');
+            detailMediaContainer.style.setProperty('--media-max-width', selectedWork.mediaMaxWidth || getDefaultVideoMaxWidth(isConfiguredPortrait));
+
+            detailVideoFile.onloadedmetadata = null;
+
+            if (selectedWork.videoFile) {
+                detailMediaContainer.classList.add('is-video');
+                detailImage.style.display = 'none';
+                detailImage.src = '';
+                detailVideo.style.display = 'none';
+                detailVideo.src = '';
+                detailVideoFile.pause();
+                detailVideoFile.currentTime = 0;
+                detailVideoFile.src = selectedWork.videoFile;
+                detailVideoFile.style.display = 'block';
+                detailVideoFile.muted = false;
+                detailVideoFile.defaultMuted = false;
+                detailVideoFile.volume = 1;
+
+                detailVideoFile.onloadedmetadata = () => {
+                    if (!detailVideoFile.videoWidth || !detailVideoFile.videoHeight) {
+                        return;
+                    }
+
+                    const actualWidth = detailVideoFile.videoWidth;
+                    const actualHeight = detailVideoFile.videoHeight;
+                    const isActualPortrait = actualHeight > actualWidth;
+
+                    detailMediaContainer.style.setProperty('--media-ratio', `${actualWidth} / ${actualHeight}`);
+                    detailMediaContainer.style.setProperty('--media-max-width', selectedWork.mediaMaxWidth || getDefaultVideoMaxWidth(isActualPortrait));
+                };
+            } else if (selectedWork.video) {
+                detailMediaContainer.classList.add('is-video');
+                detailImage.style.display = 'none';
+                detailImage.src = '';
+                detailVideoFile.pause();
+                detailVideoFile.currentTime = 0;
+                detailVideoFile.style.display = 'none';
+                detailVideoFile.src = '';
+                detailVideo.src = selectedWork.video;
+                detailVideo.style.display = 'block';
+                detailMediaContainer.style.setProperty('--media-ratio', selectedWork.videoRatio || '16 / 9');
+                detailMediaContainer.style.setProperty('--media-max-width', selectedWork.mediaMaxWidth || getDefaultVideoMaxWidth(isConfiguredPortrait));
+            } else {
+                detailVideoFile.pause();
+                detailVideoFile.currentTime = 0;
+                detailVideoFile.style.display = 'none';
+                detailVideoFile.src = '';
+                detailVideo.style.display = 'none';
+                detailVideo.src = '';
+                detailImage.src = selectedWork.image;
+                detailImage.alt = selectedWork.title;
+                detailImage.style.display = 'block';
+            }
+
+            showPage('work-detail');
+        }
+
+        function scrollToProject(projectId) {
+            showPage('home');
+            document.getElementById('project-' + projectId).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function applyRandomProjectLayout() {
+            const projectItems = document.querySelectorAll('#home .work-item');
+
+            projectItems.forEach(item => {
+                item.classList.remove('info-left');
+
+                if (Math.random() < 0.5) {
+                    item.classList.add('info-left');
+                }
+
+                const randomGap = Math.floor(Math.random() * 121) + 40;
+                item.style.setProperty('--info-gap', randomGap + 'px');
+            });
+        }
+
+        function updateCursorGlow(event) {
+            document.body.style.setProperty('--cursor-x', event.clientX + 'px');
+            document.body.style.setProperty('--cursor-y', event.clientY + 'px');
+        }
+
+        function enableMobileHeaderAutoHide() {
+            const isMobileLayout = window.matchMedia('(max-width: 900px)');
+            const header = document.querySelector('header');
+            let lastScrollY = window.scrollY;
+
+            function handleScroll() {
+                if (!isMobileLayout.matches) {
+                    header.classList.remove('mobile-header-hidden');
+                    lastScrollY = window.scrollY;
+                    return;
+                }
+
+                const currentScrollY = window.scrollY;
+
+                if (currentScrollY <= 8) {
+                    header.classList.remove('mobile-header-hidden');
+                } else if (currentScrollY > lastScrollY + 6) {
+                    header.classList.add('mobile-header-hidden');
+                } else if (currentScrollY < lastScrollY - 6) {
+                    header.classList.remove('mobile-header-hidden');
+                }
+
+                lastScrollY = currentScrollY;
+            }
+
+            window.addEventListener('scroll', handleScroll, { passive: true });
+            window.addEventListener('resize', handleScroll);
+            handleScroll();
+        }
+
+        document.addEventListener('mousemove', updateCursorGlow);
+        window.addEventListener('pagehide', stopAllMediaPlayback);
+        window.addEventListener('beforeunload', stopAllMediaPlayback);
+
+        applyRandomProjectLayout();
+        enableMobileHeaderAutoHide();
+    </script>
+</body>
+
+</html>
